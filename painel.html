@@ -1,0 +1,886 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Registro de geolocalização CN Natura</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+  :root {
+    --placa: #0B4A8B;
+    --placa-escura: #083766;
+    --tinta: #14202E;
+    --asfalto: #556270;
+    --fundo: #EEF2F6;
+    --linha: #D3DCE6;
+    --linha-suave: #E6ECF2;
+    --ok: #1F7A4D;
+    --revisar: #B26A00;
+    --validado: #0B4A8B;
+    --descartado: #8C97A3;
+    --erro: #B42318;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--fundo);
+    color: var(--tinta);
+    font-family: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.45;
+  }
+  [hidden] { display: none !important; }
+
+  .topo { display: flex; align-items: center; gap: 14px; padding: 12px 20px; background: #fff; border-bottom: 1px solid var(--linha); flex-wrap: wrap; }
+  .placa {
+    background: var(--placa); color: #fff; font-weight: 700; font-size: 16px; padding: 5px 12px; border-radius: 7px;
+    box-shadow: inset 0 0 0 2px var(--placa), inset 0 0 0 3.5px rgba(255, 255, 255, .95);
+  }
+  .topo h1 { font-size: 20px; margin: 0; }
+  .topo .fonte { margin: 0 0 0 auto; color: var(--asfalto); font-size: 14px; }
+
+  .aviso { margin: 14px 20px 0; padding: 10px 14px; border-radius: 10px; background: #FFF3DC; color: #5E3A00; font-size: 15px; }
+
+  .grade { display: grid; grid-template-columns: 330px minmax(0, 1fr); gap: 20px; padding: 18px 20px 28px; align-items: start; }
+  @media (max-width: 960px) { .grade { grid-template-columns: 1fr; } }
+
+  .lateral section { background: #fff; border: 1px solid var(--linha); border-radius: 12px; padding: 16px; margin-bottom: 14px; }
+  .lateral h2 { font-size: 17px; margin: 0 0 4px; }
+  .lateral .dica { font-size: 14px; color: var(--asfalto); margin: 0 0 6px; }
+  .lateral label { display: block; font-size: 14px; font-weight: 700; margin: 10px 0 0; }
+  .lateral input[type="url"], .lateral input[type="password"], .lateral input[type="number"] {
+    display: block; width: 100%; margin-top: 4px; font: inherit; font-size: 15px; padding: 8px 10px;
+    color: var(--tinta); border: 1.5px solid var(--linha); border-radius: 8px; background: #fff;
+  }
+  .lateral input:focus { outline: none; border-color: var(--placa); box-shadow: 0 0 0 3px rgba(11, 74, 139, .18); }
+  .lateral .marcar { display: flex; gap: 8px; align-items: center; font-weight: 400; }
+  .lateral .marcar input { width: 18px; height: 18px; accent-color: var(--placa); margin: 0; }
+  .par { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: end; }
+  .grupo { font-size: 14px; font-weight: 700; margin: 14px 0 -4px; }
+  .ou { text-align: center; color: var(--asfalto); font-size: 14px; margin: 10px 0; }
+  .copiar { display: flex; gap: 8px; align-items: stretch; margin-top: 4px; }
+  .copiar input[type="url"] { flex: 1; min-width: 0; margin-top: 0; }
+  .copiar .acao { margin-left: 0; }
+  .lateral textarea {
+    display: block; width: 100%; margin-top: 4px; font: inherit; font-size: 14px; line-height: 1.4; padding: 8px 10px;
+    color: var(--tinta); border: 1.5px solid var(--linha); border-radius: 8px; background: #fff; resize: vertical;
+  }
+  .lateral textarea:focus { outline: none; border-color: var(--placa); box-shadow: 0 0 0 3px rgba(11, 74, 139, .18); }
+
+  .botao {
+    display: block; width: 100%; margin-top: 12px; min-height: 42px; padding: 9px 14px;
+    font: inherit; font-size: 15px; font-weight: 700; color: #fff; background: var(--placa);
+    border: 2px solid var(--placa); border-radius: 9px; cursor: pointer; text-align: center;
+  }
+  .botao:hover { background: var(--placa-escura); border-color: var(--placa-escura); }
+  .botao.secundario { background: #fff; color: var(--placa); }
+  .botao.secundario:hover { background: rgba(11, 74, 139, .06); }
+  .botao:disabled { opacity: .5; cursor: progress; }
+  .botao:focus-visible, .filtro:focus-visible, .acao:focus-visible, .ver:focus-visible { outline: 3px solid rgba(11, 74, 139, .45); outline-offset: 2px; }
+  .arquivo { position: relative; overflow: hidden; }
+  .arquivo input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .msg { font-size: 14px; margin: 8px 0 0; color: var(--asfalto); min-height: 1em; }
+  .msg.erro { color: var(--erro); font-weight: 700; }
+  .msg.ok { color: var(--ok); font-weight: 700; }
+
+  .principal { min-width: 0; }
+  .resumo { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-bottom: 12px; }
+  .totais { margin: 0; font-size: 16px; }
+  .filtros { display: flex; flex-wrap: wrap; gap: 8px; }
+  .filtro {
+    display: inline-flex; align-items: center; gap: 7px; padding: 6px 12px; min-height: 36px;
+    font: inherit; font-size: 14px; font-weight: 700; color: var(--tinta);
+    background: #fff; border: 1.5px solid var(--linha); border-radius: 999px; cursor: pointer;
+  }
+  .filtro.ativo { border-color: var(--tinta); background: var(--tinta); color: #fff; }
+  .filtro .qtd { font-variant-numeric: tabular-nums; font-weight: 400; }
+  .ponto { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+
+  .mapa { height: 52vh; min-height: 360px; border: 1px solid var(--linha); border-radius: 12px; background: #DDE4EC; z-index: 0; }
+  .mapa .indisponivel { padding: 24px; color: var(--asfalto); }
+
+  .ferramentas { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 14px 0 6px; }
+  .ferramentas input[type="search"] {
+    flex: 1 1 220px; font: inherit; font-size: 15px; padding: 8px 12px;
+    border: 1.5px solid var(--linha); border-radius: 9px; background: #fff;
+  }
+  .ferramentas .botao { width: auto; margin: 0; }
+
+  .rolagem { overflow-x: auto; background: #fff; border: 1px solid var(--linha); border-radius: 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 15px; }
+  th { text-align: left; font-size: 13px; color: var(--asfalto); padding: 10px 12px; border-bottom: 1px solid var(--linha); white-space: nowrap; }
+  td { padding: 9px 12px; border-bottom: 1px solid var(--linha-suave); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: 0; }
+  tr.sel td { background: rgba(11, 74, 139, .07); }
+  td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  td.alertas { color: #6A4100; font-size: 14px; min-width: 200px; }
+  td.acoes { white-space: nowrap; text-align: right; }
+  .suave { color: var(--asfalto); }
+  .ver { background: none; border: 0; padding: 0; font: inherit; font-weight: 700; color: var(--placa); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+  .acao {
+    font: inherit; font-size: 13px; font-weight: 700; padding: 5px 10px; margin-left: 6px;
+    border-radius: 7px; border: 1.5px solid var(--linha); background: #fff; color: var(--tinta); cursor: pointer;
+  }
+  .acao[data-acao="Validado"] { border-color: var(--validado); color: var(--validado); }
+  .acao[data-acao="Descartado"] { color: var(--erro); }
+  .acao:disabled { opacity: .5; cursor: progress; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: 14px; white-space: nowrap; }
+  .chip::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--cor); }
+  .vazio { text-align: center; color: var(--asfalto); padding: 28px 12px; margin: 0; }
+  .limite { font-size: 14px; color: var(--asfalto); margin: 8px 2px 0; }
+
+  .pop { font-family: "Atkinson Hyperlegible", system-ui, sans-serif; font-size: 14px; min-width: 200px; }
+  .pop p { margin: 6px 0; }
+  .pop .alertas { color: #6A4100; }
+  .pop a { color: var(--placa); font-weight: 700; }
+</style>
+</head>
+<body>
+<header class="topo">
+  <div class="placa" data-empresa>Zumpy</div>
+  <h1 id="titulo">Registro de geolocalização CN Natura</h1>
+  <p class="fonte" id="fonte">Nenhum dado carregado</p>
+</header>
+
+<p class="aviso" id="avisoArquivo" hidden>Este painel foi aberto como arquivo do computador. Assim o mapa do OpenStreetMap não carrega; abra pelo endereço do GitHub Pages, terminado em /painel.html.</p>
+
+<div class="grade">
+  <aside class="lateral">
+    <section>
+      <h2>Dados</h2>
+      <label for="url">URL do Apps Script</label>
+      <input type="url" id="url" placeholder="https://script.google.com/macros/s/.../exec" spellcheck="false">
+      <label for="chave">Chave do painel</label>
+      <input type="password" id="chave" autocomplete="off" spellcheck="false">
+      <label class="marcar"><input type="checkbox" id="lembrarChave"> Lembrar a chave neste navegador</label>
+      <button type="button" class="botao" id="buscar">Buscar da planilha</button>
+      <p class="ou">ou</p>
+      <label class="botao secundario arquivo">Abrir arquivo da planilha<input type="file" id="arquivoRegistros" accept=".xlsx,.xls,.csv"></label>
+      <p class="msg" id="msgDados" role="status"></p>
+    </section>
+
+    <section>
+      <h2>Regras</h2>
+      <p class="dica">O painel recalcula os alertas ao mudar qualquer valor.</p>
+      <div class="par">
+        <label>Precisão máxima (m)<input type="number" id="rPrecisao" value="100" min="1"></label>
+        <label>Divergência entre envios (m)<input type="number" id="rDivergencia" value="50" min="1"></label>
+      </div>
+      <div class="par">
+        <label>Ponto repetido (m)<input type="number" id="rRepetido" value="15" min="1"></label>
+        <label>Na mesma janela de (min)<input type="number" id="rJanela" value="60" min="1"></label>
+      </div>
+      <p class="grupo">Região de atuação (opcional)</p>
+      <div class="par">
+        <label>Latitude mínima<input type="number" id="rLatMin" step="any"></label>
+        <label>Latitude máxima<input type="number" id="rLatMax" step="any"></label>
+      </div>
+      <div class="par">
+        <label>Longitude mínima<input type="number" id="rLngMin" step="any"></label>
+        <label>Longitude máxima<input type="number" id="rLngMax" step="any"></label>
+      </div>
+    </section>
+
+    <section>
+      <h2>Base de clientes</h2>
+      <p class="dica">Opcional: planilha com código, latitude e longitude do cadastro, para comparar com o ponto enviado.</p>
+      <label class="botao secundario arquivo">Abrir base de clientes<input type="file" id="arquivoBase" accept=".xlsx,.xls,.csv"></label>
+      <label>Distância máxima do cadastro (m)<input type="number" id="rBase" value="300" min="1"></label>
+      <p class="msg" id="msgBase" role="status"></p>
+    </section>
+
+    <section>
+      <h2>Links para as CNs</h2>
+      <label for="linkGeral">Link geral, para grupos</label>
+      <div class="copiar">
+        <input type="url" id="linkGeral" spellcheck="false" placeholder="https://usuario.github.io/geo-cn-natura/">
+        <button type="button" class="acao" id="copiarLink">Copiar</button>
+      </div>
+      <p class="dica">Com o link geral, cada CN digita o próprio código. Para links pessoais, abra uma planilha com o código CN e, se tiver, nome e celular com DDD.</p>
+      <label for="modelo">Mensagem do WhatsApp</label>
+      <textarea id="modelo" rows="5"></textarea>
+      <p class="dica">O painel troca {nome} e {link} pelos dados de cada CN.</p>
+      <label class="botao secundario arquivo">Gerar links de uma planilha<input type="file" id="arquivoLinks" accept=".xlsx,.xls,.csv"></label>
+      <p class="msg" id="msgLinks" role="status"></p>
+    </section>
+  </aside>
+
+  <main class="principal">
+    <div class="resumo" id="resumo"></div>
+    <div class="mapa" id="mapa" role="region" aria-label="Mapa dos clientes"></div>
+    <div class="ferramentas">
+      <input type="search" id="busca" placeholder="Buscar código" aria-label="Buscar código">
+      <button type="button" class="botao secundario" id="exportarXlsx">Exportar XLSX</button>
+      <button type="button" class="botao secundario" id="exportarCsv" title="Só OK e Validados. Separador vírgula e decimal ponto, para importar em sistemas.">CSV dos aprovados</button>
+    </div>
+    <p class="msg" id="msgAcoes" role="status"></p>
+    <div class="rolagem">
+      <table id="tabela">
+        <thead>
+          <tr><th>Código</th><th>Status</th><th>Precisão</th><th>Envios</th><th>Último envio</th><th>Alertas</th><th></th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <p class="vazio" id="vazio">Busque os dados da planilha ou abra o arquivo exportado.</p>
+    </div>
+    <p class="limite" id="limite" hidden></p>
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="config.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var EXT = window.GEO_CONFIG || {};
+  var CONFIG = {
+    EMPRESA: EXT.EMPRESA || 'Zumpy',
+    MARCA: EXT.MARCA === undefined ? 'Natura' : String(EXT.MARCA),
+    URL_APPS_SCRIPT: String(EXT.URL_APPS_SCRIPT || '').trim(),
+    LIMITE_LINHAS: 500
+  };
+  var PADRAO_CODIGO = /^[A-Z0-9][A-Z0-9._-]{2,29}$/;
+  var MODELO_PADRAO = 'Olá, {nome}! A ' + CONFIG.EMPRESA + ' entrega seus pedidos' + (CONFIG.MARCA ? ' ' + CONFIG.MARCA : '') +
+    '. Para eles chegarem no lugar certo, confirme a localização do seu endereço neste link: {link}';
+  var COR = { OK: '#1F7A4D', Revisar: '#B26A00', Validado: '#0B4A8B', Descartado: '#8C97A3' };
+  var ORDEM = { Revisar: 0, OK: 1, Validado: 2, Descartado: 3 };
+  var PREFS = 'geoPainel.v1';
+
+  var $ = function (id) { return document.getElementById(id); };
+  var E = { envios: [], base: null, clientes: [], filtro: 'todos', busca: '', conexao: null, ajustar: true, selecionado: null };
+  var mapa = null, camada = null, circulo = null, marcadores = new Map();
+
+  // ------------------------------------------------------------ utilidades
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function normCab(s) {
+    return String(s == null ? '' : s).normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+  }
+  function normStatus(s) {
+    var t = normCab(s);
+    return { ok: 'OK', revisar: 'Revisar', validado: 'Validado', descartado: 'Descartado' }[t] || '';
+  }
+  function num(v) {
+    if (typeof v === 'number') return isFinite(v) ? v : NaN;
+    var s = String(v == null ? '' : v).trim();
+    if (!s) return NaN;
+    if (s.indexOf(',') >= 0 && s.indexOf('.') < 0) s = s.replace(',', '.');
+    var n = Number(s);
+    return isFinite(n) ? n : NaN;
+  }
+  function doisDig(n) { return (n < 10 ? '0' : '') + n; }
+  function formatar(d, utc) {
+    var g = utc
+      ? [d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate(), d.getUTCHours(), d.getUTCMinutes(), d.getUTCSeconds()]
+      : [d.getFullYear(), d.getMonth() + 1, d.getDate(), d.getHours(), d.getMinutes(), d.getSeconds()];
+    return g[0] + '-' + doisDig(g[1]) + '-' + doisDig(g[2]) + ' ' + doisDig(g[3]) + ':' + doisDig(g[4]) + ':' + doisDig(g[5]);
+  }
+  function textoData(v) {
+    if (v instanceof Date && !isNaN(v)) return formatar(v, false);
+    if (typeof v === 'number' && v > 20000 && v < 80000) return formatar(new Date(Math.round((v - 25569) * 86400000)), true);
+    return String(v == null ? '' : v).trim();
+  }
+  function msData(t) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?/.exec(t);
+    if (m) return Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +(m[6] || 0));
+    m = /^(\d{2})\/(\d{2})\/(\d{4})[ ,]+(\d{2}):(\d{2})(?::(\d{2}))?/.exec(t);
+    if (m) return Date.UTC(+m[3], +m[2] - 1, +m[1], +m[4], +m[5], +(m[6] || 0));
+    return 0;
+  }
+  function dataCurta(t) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/.exec(t || '');
+    return m ? m[3] + '/' + m[2] + '/' + m[1] + ' ' + m[4] + ':' + m[5] : (t || '');
+  }
+  function dist(a, b) {
+    var R = 6371000, r = Math.PI / 180;
+    var dLat = (b.lat - a.lat) * r, dLng = (b.lng - a.lng) * r;
+    var h = Math.pow(Math.sin(dLat / 2), 2) + Math.cos(a.lat * r) * Math.cos(b.lat * r) * Math.pow(Math.sin(dLng / 2), 2);
+    return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+  }
+  function linkMapa(p) { return 'https://www.google.com/maps/search/?api=1&query=' + p.lat + ',' + p.lng; }
+  function mensagem(id, texto, tipo) { var m = $(id); m.textContent = texto || ''; m.className = 'msg' + (tipo ? ' ' + tipo : ''); }
+  function hoje() { return formatar(new Date(), false).slice(0, 10); }
+
+  // ------------------------------------------------------------ leitura de dados
+  var ALIAS = {
+    id: ['id_envio', 'id'],
+    recebido: ['recebido_em', 'data_hora', 'data', 'recebido'],
+    codigo: ['codigo_cliente', 'codigo_cn', 'codigo', 'cod', 'cod_cn', 'cn', 'codigo_consultora', 'codigo_da_consultora', 'cliente', 'codigo_do_cliente', 'id_cliente'],
+    base: ['base'],
+    lat: ['latitude', 'lat'],
+    lng: ['longitude', 'lng', 'lon', 'long'],
+    precisao: ['precisao_m', 'precisao', 'accuracy'],
+    status: ['status'],
+    alertas: ['alertas']
+  };
+  var ALIAS_LINKS = {
+    codigo: ['codigo_cn', 'cod_cn', 'cn', 'codigo', 'cod', 'codigo_cliente', 'codigo_consultora', 'codigo_da_consultora', 'id_cliente', 'cliente'],
+    nome: ['nome', 'nome_cn', 'nome_da_consultora', 'nome_consultora', 'consultora', 'nome_completo', 'nome_cliente'],
+    celular: ['celular', 'celular_com_ddd', 'telefone', 'telefone_celular', 'whatsapp', 'fone', 'tel'],
+    base: ['base']
+  };
+  function mapearColunas(cabecalho, alias) {
+    alias = alias || ALIAS;
+    var nomes = cabecalho.map(normCab), idx = {};
+    Object.keys(alias).forEach(function (k) {
+      idx[k] = -1;
+      for (var i = 0; i < alias[k].length; i++) {
+        var pos = nomes.indexOf(alias[k][i]);
+        if (pos >= 0) { idx[k] = pos; break; }
+      }
+    });
+    return idx;
+  }
+  function acharCabecalho(linhas, exigidas, alias) {
+    for (var r = 0; r < Math.min(linhas.length, 15); r++) {
+      var idx = mapearColunas(linhas[r] || [], alias);
+      if (exigidas.every(function (k) { return idx[k] >= 0; })) return { idx: idx, inicio: r + 1 };
+    }
+    return null;
+  }
+  function paraEnvio(linha, idx, numero) {
+    function v(k) { return idx[k] >= 0 ? linha[idx[k]] : ''; }
+    var codigo = String(v('codigo') == null ? '' : v('codigo')).toUpperCase().replace(/\s+/g, '');
+    var lat = num(v('lat')), lng = num(v('lng'));
+    if (!codigo || !isFinite(lat) || !isFinite(lng)) return null;
+    var recebido = textoData(v('recebido'));
+    return {
+      id: String(v('id') || ('linha-' + numero)),
+      codigo: codigo,
+      base: String(v('base') || ''),
+      lat: lat, lng: lng,
+      precisao: num(v('precisao')),
+      recebido: recebido,
+      ms: msData(recebido),
+      status: normStatus(v('status')) || 'OK',
+      alertasPlanilha: String(v('alertas') || '')
+    };
+  }
+  function enviosDeTabela(linhas) {
+    var cab = acharCabecalho(linhas, ['codigo', 'lat', 'lng']);
+    if (!cab) throw new Error('Não achei as colunas codigo_cliente, latitude e longitude.');
+    var lista = [];
+    for (var r = cab.inicio; r < linhas.length; r++) {
+      var e = paraEnvio(linhas[r] || [], cab.idx, r + 1);
+      if (e) lista.push(e);
+    }
+    return lista;
+  }
+  function lerArquivo(arquivo) {
+    return new Promise(function (ok, falha) {
+      if (!window.XLSX) return falha(new Error('A biblioteca de planilhas não carregou. Confira a internet e recarregue.'));
+      var csv = /\.(csv|txt)$/i.test(arquivo.name);
+      var leitor = new FileReader();
+      leitor.onerror = function () { falha(new Error('Não foi possível ler o arquivo.')); };
+      leitor.onload = function () {
+        try {
+          ok(csv ? XLSX.read(leitor.result, { type: 'string', raw: true })
+                 : XLSX.read(new Uint8Array(leitor.result), { type: 'array', cellDates: true }));
+        } catch (e) { falha(new Error('Arquivo inválido: ' + e.message)); }
+      };
+      if (csv) leitor.readAsText(arquivo, 'utf-8'); else leitor.readAsArrayBuffer(arquivo);
+    });
+  }
+  function linhasDaPasta(wb, preferida) {
+    var nome = wb.SheetNames.filter(function (n) { return normCab(n) === normCab(preferida); })[0] || wb.SheetNames[0];
+    return XLSX.utils.sheet_to_json(wb.Sheets[nome], { header: 1, defval: '', raw: true });
+  }
+
+  // ------------------------------------------------------------ regras e consolidação
+  function regras() {
+    function n(id) { var v = num($(id).value); return isFinite(v) ? v : null; }
+    return {
+      precisao: n('rPrecisao') || 100, divergencia: n('rDivergencia') || 50,
+      repetido: n('rRepetido') || 15, janela: n('rJanela') || 60, base: n('rBase') || 300,
+      latMin: n('rLatMin'), latMax: n('rLatMax'), lngMin: n('rLngMin'), lngMax: n('rLngMax')
+    };
+  }
+  function precisaoOrd(e) { return isFinite(e.precisao) ? e.precisao : 1e9; }
+
+  function consolidar() {
+    var R = regras();
+    var grupos = new Map();
+    E.envios.forEach(function (e) {
+      if (!grupos.has(e.codigo)) grupos.set(e.codigo, []);
+      grupos.get(e.codigo).push(e);
+    });
+    var clientes = [];
+    grupos.forEach(function (lista, codigo) {
+      lista.sort(function (a, b) { return (a.ms - b.ms) || a.recebido.localeCompare(b.recebido); });
+      var ativos = lista.filter(function (e) { return e.status !== 'Descartado'; });
+      var c = { codigo: codigo, envios: lista, ativos: ativos, final: null, alertas: [], vizinhos: [], status: 'Descartado', ultimo: lista[lista.length - 1] };
+      if (ativos.length) {
+        var validados = ativos.filter(function (e) { return e.status === 'Validado'; });
+        var bons = ativos.filter(function (e) { return !(e.precisao > R.precisao); });
+        c.final = validados.length ? validados[validados.length - 1]
+          : bons.length ? bons[bons.length - 1]
+          : ativos.slice().sort(function (a, b) { return precisaoOrd(a) - precisaoOrd(b); })[0];
+        var f = c.final;
+        if (f.precisao > R.precisao) c.alertas.push('precisão ±' + Math.round(f.precisao) + ' m');
+        var maior = ativos.reduce(function (m, e) { return Math.max(m, dist(f, e)); }, 0);
+        if (maior > R.divergencia) c.alertas.push('envios até ' + Math.round(maior) + ' m distantes');
+        if (R.latMin !== null && R.latMax !== null && R.lngMin !== null && R.lngMax !== null) {
+          if (f.lat < Math.min(R.latMin, R.latMax) || f.lat > Math.max(R.latMin, R.latMax) ||
+              f.lng < Math.min(R.lngMin, R.lngMax) || f.lng > Math.max(R.lngMin, R.lngMax)) c.alertas.push('fora da região');
+        }
+        if (E.base) {
+          var cad = E.base.get(codigo);
+          if (!cad) c.alertas.push('código fora da base');
+          else {
+            var d = dist(f, cad);
+            if (d > R.base) c.alertas.push('a ' + Math.round(d).toLocaleString('pt-BR') + ' m do cadastro');
+          }
+        }
+      }
+      clientes.push(c);
+    });
+
+    // vários códigos no mesmo ponto em pouco tempo (ex.: envio feito de longe, por outra pessoa)
+    var pts = clientes.filter(function (c) { return c.final; }).sort(function (a, b) { return a.final.lat - b.final.lat; });
+    var dLat = R.repetido / 111320, janela = R.janela * 60000;
+    for (var i = 0; i < pts.length; i++) {
+      for (var j = i + 1; j < pts.length && pts[j].final.lat - pts[i].final.lat <= dLat; j++) {
+        var a = pts[i].final, b = pts[j].final;
+        if (a.ms && b.ms && Math.abs(a.ms - b.ms) <= janela && dist(a, b) <= R.repetido) {
+          pts[i].vizinhos.push(pts[j].codigo);
+          pts[j].vizinhos.push(pts[i].codigo);
+        }
+      }
+    }
+    pts.forEach(function (c) {
+      if (!c.vizinhos.length) return;
+      var nomes = c.vizinhos.slice(0, 3).join(', ') + (c.vizinhos.length > 3 ? ' e mais ' + (c.vizinhos.length - 3) : '');
+      c.alertas.push('mesmo ponto de ' + nomes + ' em pouco tempo');
+    });
+
+    clientes.forEach(function (c) {
+      if (c.final) c.status = c.final.status === 'Validado' ? 'Validado' : (c.alertas.length ? 'Revisar' : 'OK');
+    });
+    clientes.sort(function (a, b) { return (ORDEM[a.status] - ORDEM[b.status]) || (b.ultimo.ms - a.ultimo.ms); });
+    E.clientes = clientes;
+  }
+
+  // ------------------------------------------------------------ tela
+  function visiveis() {
+    var t = E.busca.toUpperCase().replace(/\s+/g, '');
+    return E.clientes.filter(function (c) {
+      return (E.filtro === 'todos' || c.status === E.filtro) && (!t || c.codigo.indexOf(t) >= 0);
+    });
+  }
+
+  function desenharResumo() {
+    var cont = { OK: 0, Revisar: 0, Validado: 0, Descartado: 0 };
+    E.clientes.forEach(function (c) { cont[c.status]++; });
+    var botoes = [
+      ['todos', 'Todos', E.clientes.length, null],
+      ['Revisar', 'Revisar', cont.Revisar, COR.Revisar],
+      ['OK', 'OK', cont.OK, COR.OK],
+      ['Validado', 'Validados', cont.Validado, COR.Validado],
+      ['Descartado', 'Descartados', cont.Descartado, COR.Descartado]
+    ];
+    $('resumo').innerHTML =
+      '<p class="totais"><strong>' + E.clientes.length.toLocaleString('pt-BR') + '</strong> clientes com <strong>' +
+      E.envios.length.toLocaleString('pt-BR') + '</strong> envios</p>' +
+      '<div class="filtros" role="group" aria-label="Filtrar por status">' +
+      botoes.map(function (b) {
+        var ativo = E.filtro === b[0];
+        return '<button type="button" class="filtro' + (ativo ? ' ativo' : '') + '" data-filtro="' + b[0] + '" aria-pressed="' + ativo + '">' +
+          (b[3] ? '<span class="ponto" style="background:' + b[3] + '"></span>' : '') + b[1] +
+          ' <span class="qtd">' + b[2].toLocaleString('pt-BR') + '</span></button>';
+      }).join('') + '</div>';
+  }
+
+  function desenharTabela(lista) {
+    var corpo = $('tabela').tBodies[0];
+    corpo.innerHTML = lista.slice(0, CONFIG.LIMITE_LINHAS).map(function (c) {
+      var f = c.final;
+      var acoes = (c.status === 'Validado' || c.status === 'Descartado')
+        ? '<button type="button" class="acao" data-acao="Revisar" data-codigo="' + esc(c.codigo) + '">Reabrir</button>'
+        : '<button type="button" class="acao" data-acao="Validado" data-codigo="' + esc(c.codigo) + '">Validar</button>' +
+          '<button type="button" class="acao" data-acao="Descartado" data-codigo="' + esc(c.codigo) + '">Descartar</button>';
+      var desc = c.envios.length - c.ativos.length;
+      return '<tr data-codigo="' + esc(c.codigo) + '"' + (E.selecionado === c.codigo ? ' class="sel"' : '') + '>' +
+        '<td>' + (f ? '<button type="button" class="ver" data-ver="' + esc(c.codigo) + '">' + esc(c.codigo) + '</button>' : esc(c.codigo)) + '</td>' +
+        '<td><span class="chip" style="--cor:' + COR[c.status] + '">' + c.status + '</span></td>' +
+        '<td class="num">' + (f && isFinite(f.precisao) ? '±' + Math.round(f.precisao) + ' m' : '<span class="suave">sem ponto</span>') + '</td>' +
+        '<td class="num">' + c.ativos.length + (desc ? ' <span class="suave">(+' + desc + ' descartado' + (desc > 1 ? 's' : '') + ')</span>' : '') + '</td>' +
+        '<td class="num">' + esc(dataCurta(c.ultimo.recebido)) + '</td>' +
+        '<td class="alertas">' + (c.alertas.length ? c.alertas.map(esc).join('<br>') : '<span class="suave">nenhum</span>') + '</td>' +
+        '<td class="acoes">' + acoes + '</td></tr>';
+    }).join('');
+    $('vazio').hidden = lista.length > 0;
+    $('vazio').textContent = E.envios.length ? 'Nenhum cliente neste filtro.' : 'Busque os dados da planilha ou abra o arquivo exportado.';
+    $('limite').hidden = lista.length <= CONFIG.LIMITE_LINHAS;
+    $('limite').textContent = 'Mostrando ' + CONFIG.LIMITE_LINHAS + ' de ' + lista.length.toLocaleString('pt-BR') + ' clientes. Use a busca ou os filtros para achar os demais.';
+  }
+
+  function iniciarMapa() {
+    if (!window.L) {
+      $('mapa').innerHTML = '<p class="indisponivel">O mapa não carregou. Confira a internet e recarregue a página.</p>';
+      return;
+    }
+    mapa = L.map('mapa', { preferCanvas: true }).setView([-14.2, -51.9], 4);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(mapa);
+    camada = L.layerGroup().addTo(mapa);
+  }
+
+  function popup(c) {
+    var f = c.final;
+    return '<div class="pop"><strong>' + esc(c.codigo) + '</strong> <span class="chip" style="--cor:' + COR[c.status] + '">' + c.status + '</span>' +
+      '<p>Precisão ' + (isFinite(f.precisao) ? '±' + Math.round(f.precisao) + ' m' : 'não informada') + '<br>' +
+      c.ativos.length + (c.ativos.length === 1 ? ' envio' : ' envios') + ', último em ' + esc(dataCurta(c.ultimo.recebido)) + '</p>' +
+      (c.alertas.length ? '<p class="alertas">' + c.alertas.map(esc).join('<br>') + '</p>' : '') +
+      '<a href="' + linkMapa(f) + '" target="_blank" rel="noopener">Abrir no Google Maps</a></div>';
+  }
+
+  function desenharMapa(lista) {
+    if (!mapa) return;
+    camada.clearLayers();
+    marcadores = new Map();
+    if (circulo) { circulo.remove(); circulo = null; }
+    var pontos = [];
+    lista.forEach(function (c) {
+      if (!c.final) return;
+      var m = L.circleMarker([c.final.lat, c.final.lng], {
+        radius: 7, weight: 2, color: '#fff', fillColor: COR[c.status], fillOpacity: 0.95
+      });
+      m.bindPopup(function () { return popup(c); });
+      m.on('click', function () { selecionar(c.codigo, false); });
+      m.addTo(camada);
+      marcadores.set(c.codigo, m);
+      pontos.push([c.final.lat, c.final.lng]);
+    });
+    if (pontos.length && E.ajustar) {
+      mapa.fitBounds(pontos, { padding: [30, 30], maxZoom: 16 });
+      E.ajustar = false;
+    }
+  }
+
+  function selecionar(codigo, centralizar) {
+    E.selecionado = codigo;
+    var c = E.clientes.filter(function (x) { return x.codigo === codigo; })[0];
+    var linha = null;
+    Array.prototype.forEach.call(document.querySelectorAll('#tabela tbody tr'), function (tr) {
+      var eh = tr.getAttribute('data-codigo') === codigo;
+      tr.classList.toggle('sel', eh);
+      if (eh) linha = tr;
+    });
+    if (!centralizar && linha) linha.scrollIntoView({ block: 'nearest' });
+    if (!mapa || !c || !c.final) return;
+    if (circulo) circulo.remove();
+    circulo = isFinite(c.final.precisao)
+      ? L.circle([c.final.lat, c.final.lng], { radius: c.final.precisao, color: COR[c.status], weight: 1, fillOpacity: 0.08 }).addTo(mapa)
+      : null;
+    if (centralizar) mapa.setView([c.final.lat, c.final.lng], Math.max(mapa.getZoom(), 17));
+    var m = marcadores.get(codigo);
+    if (m) m.openPopup();
+  }
+
+  function atualizar() {
+    consolidar();
+    desenharResumo();
+    var lista = visiveis();
+    desenharTabela(lista);
+    desenharMapa(lista);
+  }
+
+  // ------------------------------------------------------------ ações
+  function carregarEnvios(lista, origem) {
+    E.envios = lista;
+    E.ajustar = true;
+    E.selecionado = null;
+    $('fonte').textContent = origem;
+    atualizar();
+  }
+
+  function buscar() {
+    var url = $('url').value.trim(), chave = $('chave').value.trim();
+    if (!/^https:\/\/script\.google\.com\/.+\/exec$/.test(url)) return mensagem('msgDados', 'Cole a URL do App da Web (termina em /exec).', 'erro');
+    if (!chave) return mensagem('msgDados', 'Informe a chave do painel.', 'erro');
+    salvarPrefs();
+    $('buscar').disabled = true;
+    mensagem('msgDados', 'Buscando…');
+    fetch(url + '?acao=dados&chave=' + encodeURIComponent(chave))
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (!j || !j.ok) throw new Error((j && j.erro) || 'Resposta inválida do Apps Script.');
+        var linhas = [j.colunas].concat(j.linhas || []);
+        var lista = enviosDeTabela(linhas);
+        E.conexao = { url: url, chave: chave };
+        carregarEnvios(lista, 'Planilha, atualizado em ' + dataCurta(j.geradoEm || formatar(new Date(), false)));
+        mensagem('msgDados', lista.length.toLocaleString('pt-BR') + ' envios carregados. Validar e Descartar gravam direto na planilha.', 'ok');
+      })
+      .catch(function (e) {
+        mensagem('msgDados', 'Não foi possível buscar: ' + (e && e.message ? e.message : e) +
+          '. Confira a URL, a chave e se o App da Web está liberado para qualquer pessoa.', 'erro');
+      })
+      .then(function () { $('buscar').disabled = false; });
+  }
+
+  function abrirRegistros(ev) {
+    var arquivo = ev.target.files[0];
+    if (!arquivo) return;
+    mensagem('msgDados', 'Lendo ' + arquivo.name + '…');
+    lerArquivo(arquivo).then(function (wb) {
+      var lista = enviosDeTabela(linhasDaPasta(wb, 'Registros'));
+      E.conexao = null;
+      carregarEnvios(lista, 'Arquivo ' + arquivo.name);
+      mensagem('msgDados', lista.length.toLocaleString('pt-BR') + ' envios lidos. Sem conexão com a planilha, Validar e Descartar valem só neste painel e no arquivo exportado.', 'ok');
+    }).catch(function (e) { mensagem('msgDados', e.message, 'erro'); })
+      .then(function () { ev.target.value = ''; });
+  }
+
+  function abrirBase(ev) {
+    var arquivo = ev.target.files[0];
+    if (!arquivo) return;
+    mensagem('msgBase', 'Lendo ' + arquivo.name + '…');
+    lerArquivo(arquivo).then(function (wb) {
+      var linhas = linhasDaPasta(wb, '');
+      var cab = acharCabecalho(linhas, ['codigo', 'lat', 'lng']);
+      if (!cab) throw new Error('A base precisa das colunas código, latitude e longitude.');
+      var base = new Map();
+      for (var r = cab.inicio; r < linhas.length; r++) {
+        var l = linhas[r] || [];
+        var cod = String(l[cab.idx.codigo] == null ? '' : l[cab.idx.codigo]).toUpperCase().replace(/\s+/g, '');
+        var lat = num(l[cab.idx.lat]), lng = num(l[cab.idx.lng]);
+        if (cod && isFinite(lat) && isFinite(lng)) base.set(cod, { lat: lat, lng: lng });
+      }
+      E.base = base;
+      atualizar();
+      mensagem('msgBase', base.size.toLocaleString('pt-BR') + ' clientes da base carregados.', 'ok');
+    }).catch(function (e) { mensagem('msgBase', e.message, 'erro'); })
+      .then(function () { ev.target.value = ''; });
+  }
+
+  function alterarStatus(botao) {
+    var c = E.clientes.filter(function (x) { return x.codigo === botao.getAttribute('data-codigo'); })[0];
+    if (!c) return;
+    var envio = c.final || c.ultimo;
+    var novo = botao.getAttribute('data-acao');
+    var nomeAcao = { Validado: 'validado', Descartado: 'descartado', Revisar: 'reaberto' }[novo];
+    botao.disabled = true;
+    var gravar = (E.conexao && envio.id.indexOf('linha-') !== 0)
+      ? fetch(E.conexao.url, {
+          method: 'POST',
+          body: JSON.stringify({ acao: 'status', chave: E.conexao.chave, id: envio.id, status: novo })
+        }).then(function (r) { return r.json(); }).then(function (j) {
+          if (!j || !j.ok) throw new Error((j && j.erro) || 'A planilha recusou a alteração.');
+          return 'gravado na planilha';
+        })
+      : Promise.resolve('só neste painel; exporte o XLSX para guardar');
+    gravar.then(function (onde) {
+      envio.status = novo;
+      atualizar();
+      mensagem('msgAcoes', 'Cliente ' + c.codigo + ' ' + nomeAcao + ' (' + onde + ').', 'ok');
+    }).catch(function (e) {
+      botao.disabled = false;
+      mensagem('msgAcoes', 'Não foi possível alterar ' + c.codigo + ': ' + e.message, 'erro');
+    });
+  }
+
+  // ------------------------------------------------------------ links para as CNs
+  function valor(linha, i) { var v = i >= 0 ? linha[i] : ''; return v == null ? '' : v; }
+  function normFone(v) {
+    var d = String(v == null ? '' : v).replace(/\D/g, '').replace(/^0+/, '');
+    if (d.length === 10 || d.length === 11) return '55' + d;
+    if ((d.length === 12 || d.length === 13) && d.indexOf('55') === 0) return d;
+    return '';
+  }
+  function primeiroNome(v) {
+    var p = String(v == null ? '' : v).trim().split(/\s+/)[0] || '';
+    return p ? p.charAt(0).toUpperCase() + p.slice(1).toLowerCase() : '';
+  }
+  function montarMensagem(modelo, nome, link, codigo) {
+    return modelo.replace(/,?[ \t]*\{nome\}/g, nome ? ', ' + nome : '').replace(/\{link\}/g, link).replace(/\{codigo\}/g, codigo);
+  }
+  function siteCN() {
+    var v = $('linkGeral').value.trim().split('?')[0].split('#')[0];
+    if (!/^https:\/\/\S+$/.test(v)) return '';
+    v = v.replace(/[^\/]*\.html$/, '');
+    return /\/$/.test(v) ? v : v + '/';
+  }
+  function copiarLink() {
+    var v = $('linkGeral').value.trim();
+    if (!v) return mensagem('msgLinks', 'Informe o link geral primeiro.', 'erro');
+    var feito = function () { mensagem('msgLinks', 'Link geral copiado.', 'ok'); };
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(v).then(feito, function () { $('linkGeral').select(); document.execCommand('copy'); feito(); });
+    } else { $('linkGeral').select(); document.execCommand('copy'); feito(); }
+  }
+  function gerarLinks(ev) {
+    var arquivo = ev.target.files[0];
+    if (!arquivo) return;
+    var site = siteCN();
+    if (!site) { ev.target.value = ''; return mensagem('msgLinks', 'Informe no link geral o endereço https da página das CNs.', 'erro'); }
+    var modelo = $('modelo').value.trim() || MODELO_PADRAO;
+    salvarPrefs();
+    mensagem('msgLinks', 'Lendo ' + arquivo.name + '…');
+    lerArquivo(arquivo).then(function (wb) {
+      var linhas = linhasDaPasta(wb, '');
+      var cab = acharCabecalho(linhas, ['codigo'], ALIAS_LINKS);
+      if (!cab) throw new Error('A planilha precisa de uma coluna com o código CN (por exemplo, "Código CN").');
+      var vistos = new Set(), saida = [], invalidos = 0, semFone = 0;
+      for (var r = cab.inicio; r < linhas.length; r++) {
+        var l = linhas[r] || [];
+        var cod = String(valor(l, cab.idx.codigo)).toUpperCase().replace(/\s+/g, '');
+        if (!cod) continue;
+        if (!PADRAO_CODIGO.test(cod)) { invalidos++; continue; }
+        if (vistos.has(cod)) continue;
+        vistos.add(cod);
+        var nome = String(valor(l, cab.idx.nome)).trim();
+        var fone = normFone(valor(l, cab.idx.celular));
+        var base = String(valor(l, cab.idx.base)).toUpperCase().replace(/[^A-Z0-9._-]/g, '').slice(0, 30);
+        var link = site + '?cod=' + encodeURIComponent(cod) + (base ? '&base=' + encodeURIComponent(base) : '');
+        var zap = fone ? 'https://wa.me/' + fone + '?text=' + encodeURIComponent(montarMensagem(modelo, primeiroNome(nome), link, cod)) : '';
+        if (!fone) semFone++;
+        saida.push([cod, nome, fone, base, link, zap]);
+      }
+      if (!saida.length) throw new Error('Nenhum código CN válido na planilha.');
+      var ws = XLSX.utils.aoa_to_sheet([['codigo_cn', 'nome', 'celular', 'base', 'link_pessoal', 'link_whatsapp']].concat(saida));
+      for (var i = 0; i < saida.length; i++) {
+        if (ws['E' + (i + 2)] && saida[i][4]) ws['E' + (i + 2)].l = { Target: saida[i][4] };
+        if (ws['F' + (i + 2)] && saida[i][5]) ws['F' + (i + 2)].l = { Target: saida[i][5] };
+      }
+      ws['!cols'] = [{ wch: 14 }, { wch: 26 }, { wch: 15 }, { wch: 8 }, { wch: 58 }, { wch: 58 }];
+      var livro = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(livro, ws, 'Links');
+      XLSX.writeFile(livro, 'links_cn_' + hoje() + '.xlsx');
+      mensagem('msgLinks', (saida.length === 1 ? '1 link gerado' : saida.length.toLocaleString('pt-BR') + ' links gerados') +
+        (semFone ? '; ' + semFone + ' sem celular válido, só com link pessoal' : '') +
+        (invalidos ? '; ' + invalidos + ' código(s) inválido(s) ignorado(s)' : '') + '.', 'ok');
+    }).catch(function (e) { mensagem('msgLinks', e.message, 'erro'); })
+      .then(function () { ev.target.value = ''; });
+  }
+
+  function linhaConsolidada(c) {
+    var f = c.final;
+    return {
+      codigo_cliente: c.codigo,
+      status: c.status,
+      latitude: f ? f.lat : '',
+      longitude: f ? f.lng : '',
+      precisao_m: f && isFinite(f.precisao) ? Math.round(f.precisao) : '',
+      envios: c.ativos.length,
+      ultimo_envio: c.ultimo.recebido,
+      alertas: c.alertas.join('; '),
+      base: f ? f.base : '',
+      link_mapa: f ? linkMapa(f) : ''
+    };
+  }
+
+  function exportarXlsx() {
+    if (!E.clientes.length) return mensagem('msgAcoes', 'Carregue os dados antes de exportar.', 'erro');
+    if (!window.XLSX) return mensagem('msgAcoes', 'A biblioteca de planilhas não carregou.', 'erro');
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(E.clientes.map(linhaConsolidada)), 'Consolidado');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(E.envios.map(function (e) {
+      return {
+        id_envio: e.id, recebido_em: e.recebido, codigo_cliente: e.codigo, base: e.base,
+        latitude: e.lat, longitude: e.lng, precisao_m: isFinite(e.precisao) ? Math.round(e.precisao) : '',
+        status: e.status, alertas_planilha: e.alertasPlanilha
+      };
+    })), 'Envios');
+    XLSX.writeFile(wb, 'geolocalizacao_clientes_' + hoje() + '.xlsx');
+  }
+
+  function exportarCsv() {
+    var aprovados = E.clientes.filter(function (c) { return c.final && (c.status === 'OK' || c.status === 'Validado'); });
+    if (!aprovados.length) return mensagem('msgAcoes', 'Nenhum cliente OK ou Validado para exportar.', 'erro');
+    var linhas = [['codigo_cliente', 'latitude', 'longitude', 'precisao_m', 'ultimo_envio']].concat(aprovados.map(function (c) {
+      return [c.codigo, c.final.lat.toFixed(6), c.final.lng.toFixed(6), isFinite(c.final.precisao) ? Math.round(c.final.precisao) : '', c.ultimo.recebido];
+    }));
+    var csv = '\ufeff' + linhas.map(function (l) {
+      return l.map(function (v) {
+        var s = String(v);
+        return /[",;\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+      }).join(',');
+    }).join('\r\n');
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    a.download = 'coordenadas_aprovadas_' + hoje() + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+    mensagem('msgAcoes', aprovados.length.toLocaleString('pt-BR') + ' clientes exportados no CSV.', 'ok');
+  }
+
+  // ------------------------------------------------------------ preferências
+  var CAMPOS_REGRAS = ['rPrecisao', 'rDivergencia', 'rRepetido', 'rJanela', 'rLatMin', 'rLatMax', 'rLngMin', 'rLngMax', 'rBase'];
+  function salvarPrefs() {
+    try {
+      var p = { url: $('url').value.trim(), lembrar: $('lembrarChave').checked, regras: {}, linkGeral: $('linkGeral').value.trim(), modelo: $('modelo').value };
+      if (p.lembrar) p.chave = $('chave').value.trim();
+      CAMPOS_REGRAS.forEach(function (id) { p.regras[id] = $(id).value; });
+      localStorage.setItem(PREFS, JSON.stringify(p));
+    } catch (e) { /* navegador sem armazenamento: segue sem lembrar */ }
+  }
+  function carregarPrefs() {
+    try {
+      var p = JSON.parse(localStorage.getItem(PREFS) || 'null');
+      if (!p) return;
+      if (p.url) $('url').value = p.url;
+      if (p.lembrar) { $('lembrarChave').checked = true; $('chave').value = p.chave || ''; }
+      Object.keys(p.regras || {}).forEach(function (id) { if ($(id)) $(id).value = p.regras[id]; });
+      if (p.linkGeral) $('linkGeral').value = p.linkGeral;
+      if (p.modelo) $('modelo').value = p.modelo;
+    } catch (e) { /* ignora preferências corrompidas */ }
+  }
+
+  // ------------------------------------------------------------ início
+  document.querySelectorAll('[data-empresa]').forEach(function (n) { n.textContent = CONFIG.EMPRESA; });
+  var titulo = 'Registro de geolocalização' + (CONFIG.MARCA ? ' CN ' + CONFIG.MARCA : ' de clientes');
+  $('titulo').textContent = titulo;
+  document.title = titulo;
+  if (location.protocol === 'file:') $('avisoArquivo').hidden = false;
+  $('modelo').value = MODELO_PADRAO;
+  carregarPrefs();
+  if (!$('url').value && CONFIG.URL_APPS_SCRIPT) $('url').value = CONFIG.URL_APPS_SCRIPT;
+  if (!$('linkGeral').value && location.protocol === 'https:') $('linkGeral').value = new URL('./', location.href).href;
+  iniciarMapa();
+
+  $('buscar').addEventListener('click', buscar);
+  $('arquivoRegistros').addEventListener('change', abrirRegistros);
+  $('arquivoBase').addEventListener('change', abrirBase);
+  $('lembrarChave').addEventListener('change', salvarPrefs);
+  CAMPOS_REGRAS.forEach(function (id) { $(id).addEventListener('change', function () { salvarPrefs(); atualizar(); }); });
+  $('busca').addEventListener('input', function () { E.busca = this.value; var l = visiveis(); desenharTabela(l); desenharMapa(l); });
+  $('resumo').addEventListener('click', function (ev) {
+    var b = ev.target.closest('[data-filtro]');
+    if (!b) return;
+    E.filtro = b.getAttribute('data-filtro');
+    E.ajustar = true;
+    desenharResumo();
+    var l = visiveis(); desenharTabela(l); desenharMapa(l);
+  });
+  $('tabela').addEventListener('click', function (ev) {
+    var ver = ev.target.closest('[data-ver]');
+    if (ver) return selecionar(ver.getAttribute('data-ver'), true);
+    var acao = ev.target.closest('[data-acao]');
+    if (acao) alterarStatus(acao);
+  });
+  $('exportarXlsx').addEventListener('click', exportarXlsx);
+  $('copiarLink').addEventListener('click', copiarLink);
+  $('arquivoLinks').addEventListener('change', gerarLinks);
+  $('linkGeral').addEventListener('change', salvarPrefs);
+  $('modelo').addEventListener('change', salvarPrefs);
+  $('exportarCsv').addEventListener('click', exportarCsv);
+
+  atualizar();
+  window.__painel = { E: E, consolidar: consolidar, enviosDeTabela: enviosDeTabela };
+})();
+</script>
+</body>
+</html>

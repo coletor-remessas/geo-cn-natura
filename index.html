@@ -1,0 +1,541 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0B4A8B">
+<title>Confirme o local da sua entrega</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+  :root {
+    --placa: #0B4A8B;
+    --placa-escura: #083766;
+    --tinta: #14202E;
+    --asfalto: #556270;
+    --fundo: #EEF2F6;
+    --papel: #FFFFFF;
+    --linha: #D3DCE6;
+    --ok: #1F7A4D;
+    --ok-fundo: #E6F3EB;
+    --atencao: #8A5300;
+    --atencao-fundo: #FFF3DC;
+    --erro: #B42318;
+    --erro-fundo: #FDECEA;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--fundo);
+    color: var(--tinta);
+    font-family: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    font-size: 18px;
+    line-height: 1.5;
+  }
+  .pagina { max-width: 520px; margin: 0 auto; padding: 16px 16px 40px; }
+
+  .topo { display: flex; align-items: center; gap: 12px; padding: 6px 0 16px; }
+  .placa {
+    background: var(--placa);
+    color: #fff;
+    font-weight: 700;
+    font-size: 17px;
+    padding: 6px 14px;
+    border-radius: 7px;
+    box-shadow: inset 0 0 0 2px var(--placa), inset 0 0 0 3.5px rgba(255, 255, 255, .95);
+  }
+  .topo p { margin: 0; color: var(--asfalto); font-size: 15px; line-height: 1.3; }
+
+  main { background: var(--papel); border: 1px solid var(--linha); border-radius: 14px; padding: 24px 20px 28px; }
+  h1 { font-size: 28px; line-height: 1.2; margin: 0 0 8px; }
+  h2 { font-size: 24px; line-height: 1.25; margin: 0 0 6px; text-align: center; }
+  p { margin: 0; }
+  .intro { margin-bottom: 24px; color: var(--asfalto); }
+  .centro { text-align: center; }
+  .suave { color: var(--asfalto); }
+  .pequeno { font-size: 15px; }
+
+  .campo { margin: 0 0 22px; border: 0; padding: 0; min-width: 0; }
+  .rotulo { display: block; font-weight: 700; font-size: 17px; margin: 0 0 8px; padding: 0; }
+  input[type="text"] {
+    width: 100%;
+    font: inherit;
+    font-size: 22px;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    padding: 12px 14px;
+    color: var(--tinta);
+    background: #fff;
+    border: 2px solid var(--linha);
+    border-radius: 10px;
+  }
+  input[type="text"]::placeholder { text-transform: none; letter-spacing: 0; color: #8C97A3; font-size: 18px; }
+  input[type="text"]:focus { outline: none; border-color: var(--placa); box-shadow: 0 0 0 3px rgba(11, 74, 139, .2); }
+  .dica { font-size: 15px; color: var(--asfalto); margin-top: 6px; }
+  .erro-campo { font-size: 15px; color: var(--erro); margin-top: 6px; font-weight: 700; }
+
+  .opcoes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .opcao { position: relative; display: block; cursor: pointer; }
+  .opcao input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .opcao span {
+    display: flex; align-items: center; justify-content: center; text-align: center;
+    min-height: 60px; padding: 8px 10px;
+    border: 2px solid var(--linha); border-radius: 10px;
+    font-weight: 700; font-size: 17px; line-height: 1.25; color: var(--tinta); background: #fff;
+  }
+  .opcao input:checked + span { border-color: var(--placa); background: rgba(11, 74, 139, .08); color: var(--placa-escura); }
+  .opcao input:focus-visible + span { box-shadow: 0 0 0 3px rgba(11, 74, 139, .3); }
+
+  .aceite { display: flex; gap: 12px; align-items: flex-start; cursor: pointer; }
+  .aceite input { flex: none; width: 26px; height: 26px; margin: 1px 0 0; accent-color: var(--placa); }
+  .aceite span { font-size: 17px; }
+  .nota { font-size: 15px; color: var(--asfalto); margin: 8px 0 0 38px; }
+
+  .caixa { border-radius: 10px; padding: 12px 14px; font-size: 16px; margin: 0 0 18px; }
+  .caixa strong { display: block; margin-bottom: 2px; }
+  .caixa.atencao { background: var(--atencao-fundo); color: #5E3A00; }
+  .caixa.erro { background: var(--erro-fundo); color: #7A1810; }
+  .caixa.info { background: rgba(11, 74, 139, .07); color: var(--placa-escura); }
+
+  .botao {
+    display: block; width: 100%; min-height: 56px;
+    font: inherit; font-size: 19px; font-weight: 700;
+    color: #fff; background: var(--placa);
+    border: 2px solid var(--placa); border-radius: 10px;
+    padding: 12px 16px; cursor: pointer;
+  }
+  .botao:hover { background: var(--placa-escura); border-color: var(--placa-escura); }
+  .botao.secundario { background: #fff; color: var(--placa); }
+  .botao.secundario:hover { background: rgba(11, 74, 139, .06); }
+  .botao:disabled { opacity: .45; cursor: not-allowed; }
+  .botao:focus-visible, .link:focus-visible { outline: 3px solid rgba(11, 74, 139, .45); outline-offset: 2px; }
+  .acoes { display: grid; gap: 10px; margin-top: 20px; }
+  .link {
+    background: none; border: 0; padding: 0; font: inherit; font-size: 16px; font-weight: 700;
+    color: var(--placa); text-decoration: underline; text-underline-offset: 3px; cursor: pointer;
+  }
+  .links { display: flex; justify-content: center; gap: 22px; margin-top: 14px; flex-wrap: wrap; }
+
+  .visor { margin: -4px 0 6px; }
+  .anel { display: block; width: 220px; height: 220px; margin: 0 auto; overflow: visible; }
+  .guias circle { fill: none; stroke: #C5D0DC; stroke-width: 1; }
+  .guias text { font-family: inherit; font-size: 13px; fill: #5F6B78; text-anchor: middle; paint-order: stroke; stroke: #fff; stroke-width: 4px; stroke-linejoin: round; }
+  .anel-area { fill: rgba(11, 74, 139, .12); transition: r .7s ease, fill .4s ease; }
+  .anel-borda { fill: none; stroke: var(--placa); stroke-width: 2; stroke-dasharray: 5 6; transform-origin: 120px 120px; transition: r .7s ease, stroke .4s ease; }
+  .anel .pino { fill: var(--placa); transition: fill .4s ease; }
+  .anel.buscando .anel-borda { animation: girar 7s linear infinite; }
+  .anel.boa .anel-area { fill: rgba(31, 122, 77, .14); }
+  .anel.boa .anel-borda { stroke: var(--ok); stroke-dasharray: none; }
+  .anel.boa .pino { fill: var(--ok); }
+  .anel.fraca .anel-area { fill: rgba(138, 83, 0, .13); }
+  .anel.fraca .anel-borda { stroke: var(--atencao); }
+  .anel.fraca .pino { fill: var(--atencao); }
+  @keyframes girar { to { transform: rotate(360deg); } }
+
+  .medida { font-size: 20px; font-weight: 700; text-align: center; margin: 2px 0 4px; font-variant-numeric: tabular-nums; }
+  .dados { margin: 14px 0 0; padding: 12px 14px; border: 1px solid var(--linha); border-radius: 10px; font-size: 17px; }
+  .dados div { display: flex; justify-content: space-between; gap: 12px; }
+  .dados div + div { margin-top: 4px; }
+  .dados dt { color: var(--asfalto); }
+  .dados dd { margin: 0; font-weight: 700; text-align: right; word-break: break-all; }
+
+  .rodape { text-align: center; color: var(--asfalto); font-size: 15px; margin-top: 18px; }
+  .rodape a { color: var(--placa); font-weight: 700; }
+  [hidden] { display: none !important; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .anel-area, .anel-borda, .anel .pino { transition: none; }
+    .anel.buscando .anel-borda { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div class="pagina">
+  <header class="topo">
+    <div class="placa" data-empresa>Zumpy</div>
+    <p id="subtitulo">Entregas Natura</p>
+  </header>
+
+  <main>
+    <div class="caixa atencao" id="avisoConfig" hidden>
+      <strong>Configuração pendente</strong>
+      Cole no arquivo config.js a URL do App da Web do Apps Script, a que termina em /exec. Sem ela, a captura funciona, mas o envio fica bloqueado.
+    </div>
+
+    <div class="visor" id="visor" hidden>
+      <svg class="anel" id="anel" viewBox="0 0 240 240" aria-hidden="true">
+        <g class="guias">
+          <circle id="guiaAlerta" cx="120" cy="120" r="64"></circle>
+          <circle id="guiaBoa" cx="120" cy="120" r="43"></circle>
+        </g>
+        <circle class="anel-area" id="anelArea" cx="120" cy="120" r="96"></circle>
+        <circle class="anel-borda" id="anelBorda" cx="120" cy="120" r="96"></circle>
+        <g class="guias">
+          <text id="rotuloAlerta" x="120" y="198">100 m</text>
+          <text id="rotuloBoa" x="120" y="177">20 m</text>
+        </g>
+        <g transform="translate(120 120)">
+          <path class="pino" d="M0 0C-3.5-8.5-15-15.5-15-28a15 15 0 1 1 30 0C15-15.5 3.5-8.5 0 0Z"></path>
+          <circle cx="0" cy="-28" r="5.5" fill="#fff"></circle>
+        </g>
+      </svg>
+    </div>
+
+    <!-- Etapa 1: formulário -->
+    <section data-etapa="form">
+      <h1>Confirme o local da sua entrega</h1>
+      <p class="intro" id="intro">Faça isto no endereço onde você recebe seus pedidos. Leva menos de um minuto.</p>
+
+      <div class="campo">
+        <label class="rotulo" for="codigo" id="rotuloCodigo">Código CN</label>
+        <input type="text" id="codigo" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="30" placeholder="Digite seu código">
+        <p class="dica" id="dicaCodigo">É o seu código de consultora ou consultor Natura.</p>
+        <p class="erro-campo" id="erroCodigo" hidden>Confira o código: use só letras e números, sem espaços.</p>
+      </div>
+
+      <fieldset class="campo">
+        <legend class="rotulo">Você está no endereço de entrega agora?</legend>
+        <div class="opcoes">
+          <label class="opcao"><input type="radio" name="local" value="sim"><span>Sim, estou no endereço</span></label>
+          <label class="opcao"><input type="radio" name="local" value="nao"><span>Não estou</span></label>
+        </div>
+      </fieldset>
+
+      <div class="caixa info" id="avisoLonge" hidden>
+        <strong>Tudo bem.</strong>
+        Abra este mesmo link quando estiver no endereço de entrega. A localização é do lugar onde o celular está.
+      </div>
+
+      <div class="campo">
+        <label class="aceite">
+          <input type="checkbox" id="aceite">
+          <span>Autorizo usar a localização deste endereço para a entrega dos meus pedidos.</span>
+        </label>
+        <p class="nota">A localização é capturada uma única vez, quando você toca no botão abaixo.</p>
+      </div>
+
+      <div class="caixa erro" id="erroGps" role="alert" hidden></div>
+
+      <button type="button" class="botao" id="capturar" disabled>Capturar minha localização</button>
+    </section>
+
+    <!-- Etapa 2: buscando GPS -->
+    <section data-etapa="gps" hidden>
+      <h2 tabindex="-1">Buscando sinal de GPS</h2>
+      <p class="medida" id="precisaoAtual" aria-live="polite">Aguardando o celular…</p>
+      <p class="centro suave pequeno">Fique parado no endereço. Leva até <span id="tempoMax">20</span> segundos.</p>
+      <div class="acoes">
+        <button type="button" class="botao secundario" id="usarAgora" disabled>Usar esta localização</button>
+      </div>
+    </section>
+
+    <!-- Etapa 3: resultado -->
+    <section data-etapa="resultado" hidden>
+      <h2 tabindex="-1">Localização capturada</h2>
+      <p class="medida" id="resPrecisao"></p>
+      <dl class="dados">
+        <div><dt>Código</dt><dd id="resCodigo"></dd></div>
+      </dl>
+      <div class="caixa atencao" id="avisoFraca" style="margin-top:16px" hidden>
+        <strong>A precisão ficou baixa.</strong>
+        Vá para perto de uma janela ou para a área aberta da casa e capture de novo.
+      </div>
+      <div class="caixa erro" id="erroEnvio" role="alert" style="margin-top:16px" hidden></div>
+      <div class="acoes" id="acoesResultado">
+        <button type="button" class="botao" id="enviar">Enviar localização</button>
+        <button type="button" class="botao secundario" id="deNovo">Capturar de novo</button>
+      </div>
+      <div class="links">
+        <a class="link" id="linkMapa" href="#" target="_blank" rel="noopener">Conferir no mapa</a>
+        <button type="button" class="link" id="corrigir">Corrigir o código</button>
+      </div>
+    </section>
+
+    <!-- Etapa 4: enviado -->
+    <section data-etapa="sucesso" hidden>
+      <h2 tabindex="-1">Localização enviada</h2>
+      <p class="centro suave">Obrigado! Recebemos a localização do seu endereço de entrega.</p>
+      <dl class="dados">
+        <div><dt>Código</dt><dd id="sucCodigo"></dd></div>
+        <div><dt>Protocolo</dt><dd id="sucProtocolo"></dd></div>
+      </dl>
+      <p class="centro suave pequeno" style="margin-top:14px">Você já pode fechar esta página.</p>
+    </section>
+  </main>
+
+  <p class="rodape" id="rodape">Dúvidas? Fale com a central de entregas da <span data-empresa>Zumpy</span>.</p>
+</div>
+
+<script src="config.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  // A configuração editável fica no config.js (URL do Apps Script, WhatsApp e textos).
+  var EXT = window.GEO_CONFIG || {};
+  var CONFIG = {
+    URL_APPS_SCRIPT: String(EXT.URL_APPS_SCRIPT || '').trim(),
+    WHATSAPP_CENTRAL: (function (d) { d = d.replace(/^0+/, ''); return (d.length === 10 || d.length === 11) ? '55' + d : d; })(String(EXT.WHATSAPP_CENTRAL || '').replace(/\D/g, '')),
+    EMPRESA: EXT.EMPRESA || 'Zumpy',
+    MARCA: EXT.MARCA === undefined ? 'Natura' : String(EXT.MARCA),
+    ROTULO_CODIGO: EXT.ROTULO_CODIGO || 'Código CN',
+    DICA_CODIGO: EXT.DICA_CODIGO || 'É o seu código de consultora ou consultor Natura.',
+    // Mesmo formato do Codigo.gs (letras, números, ponto, hífen ou sublinhado; 3 a 30 caracteres)
+    PADRAO_CODIGO: /^[A-Z0-9][A-Z0-9._-]{2,29}$/,
+    PRECISAO_BOA_M: 20,      // para de buscar ao chegar nesta precisão
+    PRECISAO_ALERTA_M: 100,  // acima disto, sugere capturar de novo
+    TEMPO_MAX_GPS_S: 20
+  };
+
+  var $ = function (id) { return document.getElementById(id); };
+  var etapas = document.querySelectorAll('[data-etapa]');
+  var estado = { codigo: '', base: '', noEndereco: null, consentimento: false, posicao: null, id: null, captura: null };
+
+  var urlOk = /^https:\/\/script\.google\.com\/.+\/exec$/.test(CONFIG.URL_APPS_SCRIPT);
+  var params = new URLSearchParams(window.location.search);
+
+  function normalizarCodigo(s) { return String(s || '').toUpperCase().replace(/\s+/g, ''); }
+  function codigoValido(s) { return CONFIG.PADRAO_CODIGO.test(s); }
+  function metros(n) { return '±' + Math.round(n).toLocaleString('pt-BR') + ' m'; }
+
+  function novoId() {
+    if (window.crypto && typeof window.crypto.randomUUID === 'function') return window.crypto.randomUUID();
+    var bytes = new Uint8Array(16);
+    window.crypto.getRandomValues(bytes);
+    return Array.prototype.map.call(bytes, function (b) { return ('0' + b.toString(16)).slice(-2); }).join('');
+  }
+
+  function irPara(nome) {
+    Array.prototype.forEach.call(etapas, function (s) { s.hidden = s.getAttribute('data-etapa') !== nome; });
+    $('visor').hidden = nome === 'form';
+    var titulo = document.querySelector('[data-etapa="' + nome + '"] h2');
+    if (titulo) titulo.focus({ preventScroll: true });
+    window.scrollTo(0, 0);
+  }
+
+  // ------------------------------------------------------------------ anel de precisão
+  function raioPara(precisao) {
+    var p = Math.max(3, Math.min(precisao, 2000));
+    return Math.round(18 + 30 * Math.log10(p / 3)); // 3 m = 18; 20 m = 43; 100 m = 64; 2 km = 103
+  }
+  function desenharAnel(precisao, situacao) {
+    var r = precisao == null ? 96 : raioPara(precisao);
+    ['anelArea', 'anelBorda'].forEach(function (id) {
+      var c = $(id);
+      c.setAttribute('r', r);
+      c.style.r = r + 'px';
+    });
+    $('anel').setAttribute('class', 'anel ' + situacao);
+  }
+
+  // ------------------------------------------------------------------ formulário
+  function atualizarFormulario() {
+    estado.codigo = normalizarCodigo($('codigo').value);
+    var okCodigo = codigoValido(estado.codigo);
+    $('erroCodigo').hidden = okCodigo || estado.codigo.length < 3;
+    $('avisoLonge').hidden = estado.noEndereco !== false;
+    $('capturar').disabled = !(okCodigo && estado.noEndereco === true && estado.consentimento);
+  }
+
+  function mostrarErroGps(tipo) {
+    var textos = {
+      negado: '<strong>A localização está bloqueada para esta página.</strong>' +
+        'No Android, toque no ícone ao lado do endereço do site, abra Permissões e permita Localização. ' +
+        'No iPhone, vá em Ajustes, Privacidade e Segurança, Serviços de Localização e permita para os Sites do Safari. ' +
+        'Depois toque em Capturar minha localização de novo.',
+      indisponivel: '<strong>O celular não encontrou sua posição.</strong>' +
+        'Ligue a localização (GPS) do aparelho e tente de novo.',
+      tempo: '<strong>O GPS não respondeu a tempo.</strong>' +
+        'Vá para perto de uma janela ou para a área aberta da casa e tente de novo.',
+      https: '<strong>Esta página precisa ser aberta por um endereço https://.</strong>' +
+        'Avise quem enviou o link.',
+      suporte: '<strong>Este navegador não captura localização.</strong>' +
+        'Abra o link no Chrome ou no Safari.'
+    };
+    var caixa = $('erroGps');
+    caixa.innerHTML = textos[tipo] || textos.tempo;
+    caixa.hidden = false;
+  }
+
+  // ------------------------------------------------------------------ GPS
+  // Acompanha as leituras e fica com a mais precisa; para ao atingir PRECISAO_BOA_M ou no tempo máximo.
+  function iniciarCaptura(aoMelhorar) {
+    var melhor = null, ultimoErro = null, terminou = false, idWatch = null, relogio = null;
+    var resolver, rejeitar;
+    var promessa = new Promise(function (res, rej) { resolver = res; rejeitar = rej; });
+
+    function terminar() {
+      if (terminou) return;
+      terminou = true;
+      if (idWatch !== null) navigator.geolocation.clearWatch(idWatch);
+      clearTimeout(relogio);
+      if (melhor) resolver(melhor); else rejeitar(ultimoErro || { code: 3 });
+    }
+
+    idWatch = navigator.geolocation.watchPosition(function (pos) {
+      if (terminou) return;
+      if (!melhor || pos.coords.accuracy < melhor.coords.accuracy) {
+        melhor = pos;
+        aoMelhorar(pos.coords.accuracy);
+      }
+      if (melhor.coords.accuracy <= CONFIG.PRECISAO_BOA_M) terminar();
+    }, function (erro) {
+      ultimoErro = erro;
+      if (erro && erro.code === 1) { melhor = null; terminar(); }
+    }, { enableHighAccuracy: true, maximumAge: 0, timeout: CONFIG.TEMPO_MAX_GPS_S * 1000 });
+
+    relogio = setTimeout(terminar, CONFIG.TEMPO_MAX_GPS_S * 1000 + 500);
+    return { promessa: promessa, parar: terminar };
+  }
+
+  function capturar() {
+    $('erroGps').hidden = true;
+    if (!window.isSecureContext) return mostrarErroGps('https');
+    if (!('geolocation' in navigator)) return mostrarErroGps('suporte');
+
+    $('usarAgora').disabled = true;
+    $('precisaoAtual').textContent = 'Aguardando o celular…';
+    desenharAnel(null, 'buscando');
+    irPara('gps');
+
+    estado.captura = iniciarCaptura(function (precisao) {
+      $('precisaoAtual').textContent = 'Precisão atual: ' + metros(precisao);
+      $('usarAgora').disabled = false;
+      desenharAnel(precisao, precisao <= CONFIG.PRECISAO_BOA_M ? 'boa' : 'buscando');
+    });
+
+    estado.captura.promessa.then(function (pos) {
+      estado.posicao = {
+        lat: pos.coords.latitude,
+        lng: pos.coords.longitude,
+        precisao: pos.coords.accuracy,
+        em: new Date(pos.timestamp || Date.now()).toISOString()
+      };
+      estado.id = novoId();
+      mostrarResultado();
+    }, function (erro) {
+      irPara('form');
+      mostrarErroGps(erro && erro.code === 1 ? 'negado' : erro && erro.code === 2 ? 'indisponivel' : 'tempo');
+    });
+  }
+
+  // ------------------------------------------------------------------ resultado e envio
+  function mostrarResultado() {
+    var p = estado.posicao;
+    var fraca = p.precisao > CONFIG.PRECISAO_ALERTA_M;
+    desenharAnel(p.precisao, fraca ? 'fraca' : (p.precisao <= CONFIG.PRECISAO_BOA_M ? 'boa' : 'media'));
+    $('resPrecisao').textContent = 'Precisão de ' + metros(p.precisao);
+    $('resCodigo').textContent = estado.codigo;
+    $('linkMapa').href = 'https://www.google.com/maps/search/?api=1&query=' + p.lat.toFixed(6) + ',' + p.lng.toFixed(6);
+    $('avisoFraca').hidden = !fraca;
+    $('erroEnvio').hidden = true;
+
+    var enviar = $('enviar'), deNovo = $('deNovo'), acoes = $('acoesResultado');
+    enviar.disabled = !urlOk;
+    enviar.textContent = fraca ? 'Enviar mesmo assim' : 'Enviar localização';
+    enviar.className = fraca ? 'botao secundario' : 'botao';
+    deNovo.className = fraca ? 'botao' : 'botao secundario';
+    if (fraca) acoes.insertBefore(deNovo, enviar); else acoes.insertBefore(enviar, deNovo);
+    irPara('resultado');
+  }
+
+  function enviar() {
+    var botao = $('enviar');
+    var rotulo = botao.textContent;
+    botao.disabled = true;
+    $('deNovo').disabled = true;
+    botao.textContent = 'Enviando…';
+    $('erroEnvio').hidden = true;
+
+    var corpo = JSON.stringify({
+      id: estado.id,
+      codigo: estado.codigo,
+      base: estado.base,
+      lat: estado.posicao.lat,
+      lng: estado.posicao.lng,
+      precisao: Math.round(estado.posicao.precisao),
+      capturadoEm: estado.posicao.em,
+      noEndereco: true,
+      consentimento: true
+    });
+
+    var controle = typeof AbortController === 'function' ? new AbortController() : null;
+    var limite = setTimeout(function () { if (controle) controle.abort(); }, 25000);
+
+    // Corpo em texto puro, sem cabeçalhos extras: evita a checagem prévia de CORS do navegador.
+    fetch(CONFIG.URL_APPS_SCRIPT, { method: 'POST', body: corpo, signal: controle ? controle.signal : undefined })
+      .then(function (resp) {
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        return resp.json();
+      })
+      .then(function (r) {
+        clearTimeout(limite);
+        if (!r || !r.ok) throw { doServidor: (r && r.erro) || 'O envio não foi aceito.' };
+        $('sucCodigo').textContent = estado.codigo;
+        $('sucProtocolo').textContent = r.protocolo || '—';
+        desenharAnel(estado.posicao.precisao, 'boa');
+        irPara('sucesso');
+      })
+      .catch(function (erro) {
+        clearTimeout(limite);
+        var caixa = $('erroEnvio');
+        caixa.innerHTML = erro && erro.doServidor
+          ? '<strong>Não deu para enviar.</strong>' + escapar(erro.doServidor)
+          : '<strong>Não deu para enviar.</strong>Confira a internet do celular e toque em Enviar de novo. A localização capturada continua aqui.';
+        caixa.hidden = false;
+        botao.disabled = false;
+        $('deNovo').disabled = false;
+        botao.textContent = rotulo;
+      });
+  }
+
+  function escapar(s) {
+    var d = document.createElement('div');
+    d.textContent = String(s);
+    return d.innerHTML;
+  }
+
+  // ------------------------------------------------------------------ início
+  document.querySelectorAll('[data-empresa]').forEach(function (n) { n.textContent = CONFIG.EMPRESA; });
+  document.title = 'Confirme o local da sua entrega | ' + CONFIG.EMPRESA;
+  $('subtitulo').textContent = CONFIG.MARCA ? 'Entregas ' + CONFIG.MARCA : 'Confirmação de endereço';
+  $('intro').textContent = 'Faça isto no endereço onde você recebe seus pedidos' + (CONFIG.MARCA ? ' ' + CONFIG.MARCA : '') + '. Leva menos de um minuto.';
+  $('rotuloCodigo').textContent = CONFIG.ROTULO_CODIGO;
+  $('dicaCodigo').textContent = CONFIG.DICA_CODIGO;
+  $('tempoMax').textContent = CONFIG.TEMPO_MAX_GPS_S;
+  [['guiaBoa', 'rotuloBoa', CONFIG.PRECISAO_BOA_M], ['guiaAlerta', 'rotuloAlerta', CONFIG.PRECISAO_ALERTA_M]].forEach(function (g) {
+    var r = raioPara(g[2]);
+    $(g[0]).setAttribute('r', r);
+    $(g[1]).setAttribute('x', 120);
+    $(g[1]).setAttribute('y', 120 + r + 14);
+    $(g[1]).textContent = g[2] + ' m';
+  });
+  if (CONFIG.WHATSAPP_CENTRAL) {
+    $('rodape').innerHTML = 'Dúvidas? <a href="https://wa.me/' + encodeURIComponent(CONFIG.WHATSAPP_CENTRAL) +
+      '" target="_blank" rel="noopener">Fale com a central de entregas</a>.';
+  }
+  if (!urlOk) $('avisoConfig').hidden = false;
+
+  var codigoLink = normalizarCodigo(params.get('cod'));
+  if (codigoLink) $('codigo').value = codigoLink;
+  estado.base = String(params.get('base') || '').toUpperCase().replace(/[^A-Z0-9._-]/g, '').slice(0, 30);
+
+  $('codigo').addEventListener('input', atualizarFormulario);
+  Array.prototype.forEach.call(document.querySelectorAll('input[name="local"]'), function (r) {
+    r.addEventListener('change', function () { estado.noEndereco = r.value === 'sim'; atualizarFormulario(); });
+  });
+  $('aceite').addEventListener('change', function () { estado.consentimento = this.checked; atualizarFormulario(); });
+  $('capturar').addEventListener('click', capturar);
+  $('usarAgora').addEventListener('click', function () { if (estado.captura) estado.captura.parar(); });
+  $('enviar').addEventListener('click', enviar);
+  $('deNovo').addEventListener('click', capturar);
+  $('corrigir').addEventListener('click', function () { irPara('form'); $('codigo').focus(); });
+
+  atualizarFormulario();
+})();
+</script>
+</body>
+</html>
