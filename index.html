@@ -519,8 +519,9 @@
   }
   if (!urlOk) $('avisoConfig').hidden = false;
 
+  // Códigos de teste (TESTE...) nunca vêm preenchidos pelo link, para não serem enviados por engano.
   var codigoLink = normalizarCodigo(params.get('cod'));
-  if (codigoLink) $('codigo').value = codigoLink;
+  if (codigoLink && codigoLink.indexOf('TESTE') !== 0) $('codigo').value = codigoLink;
   estado.base = String(params.get('base') || '').toUpperCase().replace(/[^A-Z0-9._-]/g, '').slice(0, 30);
 
   $('codigo').addEventListener('input', atualizarFormulario);
